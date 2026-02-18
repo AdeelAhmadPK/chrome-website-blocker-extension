@@ -17,6 +17,7 @@ export interface BlockedItem {
   favicon?: string;
   schedule?: Schedule;
   dailyLimitMinutes?: number;   // undefined = no limit
+  limitOnly?: boolean;          // true = only block when daily limit is exceeded (not always blocked)
   screenTimeToday: number;      // minutes, resets at midnight
   createdAt: number;            // Unix timestamp ms
 }

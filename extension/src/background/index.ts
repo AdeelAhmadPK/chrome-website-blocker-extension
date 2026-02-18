@@ -67,9 +67,11 @@ async function rebuildRules(): Promise<void> {
       const hasSchedule = !!item.schedule;
       const scheduleActive = hasSchedule && isScheduleActive(item.schedule!);
 
-      // Block if: no schedule (always on) OR schedule is active
-      // Block if: daily limit exceeded
-      const shouldBlock = !hasSchedule || scheduleActive || isLimited;
+      // limitOnly items (added via Usage Limit page) should only block when the limit is exceeded
+      // Regular blocked items: block always (if no schedule) or during schedule hours
+      const shouldBlock = item.limitOnly
+        ? isLimited
+        : (!hasSchedule || scheduleActive || isLimited);
       if (!shouldBlock) continue;
 
       const reason = isLimited ? 'limit' : scheduleActive ? 'schedule' : 'blocked';

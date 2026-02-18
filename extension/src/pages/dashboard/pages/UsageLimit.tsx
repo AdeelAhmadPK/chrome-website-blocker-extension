@@ -49,9 +49,9 @@ export default function UsageLimit() {
     if (!url) return;
     const existing = store.blockedItems.find((b) => b.url === url);
     if (existing) {
-      // Set a default 60 min limit
+      // Set a default 60 min limit but keep it as limitOnly if it wasn't already blocked
       const updated = store.blockedItems.map((b) =>
-        b.url === url ? { ...b, dailyLimitMinutes: 60 } : b
+        b.url === url ? { ...b, dailyLimitMinutes: 60, limitOnly: b.limitOnly ?? true } : b
       );
       await updateBlockedItems(updated);
     } else {
@@ -61,6 +61,7 @@ export default function UsageLimit() {
         type: 'domain',
         screenTimeToday: 0,
         dailyLimitMinutes: 60,
+        limitOnly: true,
         createdAt: Date.now(),
       };
       await updateBlockedItems([...store.blockedItems, item]);
