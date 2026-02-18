@@ -15,6 +15,59 @@ const REASON_LABELS: Record<string, { label: string; color: string }> = {
   focus: { label: 'Focus Session Active', color: 'bg-purple-100 text-purple-700' },
 };
 
+function MidnightCountdown() {
+  const [secsLeft, setSecsLeft] = useState(0);
+  useEffect(() => {
+    const calc = () => {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      setSecsLeft(Math.round((midnight.getTime() - now.getTime()) / 1000));
+    };
+    calc();
+    const t = setInterval(calc, 1000);
+    return () => clearInterval(t);
+  }, []);
+  const h = Math.floor(secsLeft / 3600);
+  const m = Math.floor((secsLeft % 3600) / 60);
+  const s = secsLeft % 60;
+  return (
+    <p className="text-xs text-gray-400 mt-1">
+      Resets in <span className="font-mono font-semibold text-gray-600">{h}h {m}m {s}s</span>
+    </p>
+  );
+}
+
+function TempAllowButton({ site, isPreview }: { site: string; isPreview: boolean }) {
+  const [clicked, setClicked] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+
+  const allow = () => {
+    if (isPreview) return;
+    chrome.runtime.sendMessage({ type: 'TEMPORARY_ALLOW', domain: site, minutes: 5 }, () => {
+      setClicked(true);
+      setCountdown(5);
+      const start = Date.now();
+      const t = setInterval(() => {
+        const left = Math.max(0, 5 - Math.floor((Date.now() - start) / 60000));
+        setCountdown(left);
+        if (left === 0) { clearInterval(t); window.history.back(); }
+      }, 10000);
+      setTimeout(() => window.history.back(), 200);
+    });
+  };
+
+  if (clicked) return <p className="text-sm text-green-600 mt-2">✓ Allowed for 5 min ({countdown} min left)</p>;
+  return (
+    <button
+      onClick={allow}
+      className="mt-3 px-4 py-1.5 rounded-lg border border-gray-300 text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+    >
+      Allow for 5 minutes
+    </button>
+  );
+}
+
 export default function BlockedPage() {
   const params = new URLSearchParams(window.location.search);
   const site = decodeURIComponent(params.get('site') ?? 'this site');
@@ -64,7 +117,13 @@ export default function BlockedPage() {
         <p className="text-gray-500 text-sm mb-4">{site}</p>
         <span className={`badge text-sm px-3 py-1 ${reasonInfo.color}`}>{reasonInfo.label}</span>
         <MessageByReason reason={reason} />
-        <button onClick={() => window.history.back()} className="mt-8 btn-secondary">← Go Back</button>
+        {reason === 'limit' && <MidnightCountdown />}
+        <div className="flex flex-col items-center gap-2 mt-8">
+          <button onClick={() => window.history.back()} className="btn-secondary">← Go Back</button>
+          {(reason === 'blocked' || reason === 'limit') && !isPreview && (
+            <TempAllowButton site={site} isPreview={isPreview} />
+          )}
+        </div>
         {isPreview && <p className="mt-4 text-xs text-gray-400">Preview mode</p>}
       </div>
     );

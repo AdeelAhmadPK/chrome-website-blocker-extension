@@ -29,8 +29,13 @@ export const DEFAULT_STORE: AppStorage = {
     theme: 'light',
     showNotifications: true,
     dismissedSuggestions: [],
+    breakReminderMinutes: 30,
+    dailySummaryEnabled: true,
   },
   lastDailyReset: '',
+  onboardingCompleted: false,
+  continuousBrowsingStart: undefined,
+  lastDailySummary: '',
 };
 
 export async function getStore(): Promise<AppStorage> {

@@ -64,6 +64,11 @@ async function rebuildRules(): Promise<void> {
         item.dailyLimitMinutes !== undefined &&
         item.screenTimeToday >= item.dailyLimitMinutes;
 
+      // Check temporary allow bypass
+      const now = Date.now();
+      const isTempAllowed = item.temporaryAllowUntil !== undefined && item.temporaryAllowUntil > now;
+      if (isTempAllowed) continue;
+
       const hasSchedule = !!item.schedule;
       const scheduleActive = hasSchedule && isScheduleActive(item.schedule!);
 
@@ -275,6 +280,51 @@ async function handleTrackTime(domain: string, seconds: number): Promise<void> {
     });
     await rebuildRules();
   }
+
+  // Check 80% warning
+  const todayStr = todayString();
+  for (const item of blockedItems) {
+    if (
+      item.url === domain &&
+      item.dailyLimitMinutes !== undefined &&
+      item.warningFiredAt !== todayStr &&
+      item.screenTimeToday >= item.dailyLimitMinutes * 0.8 &&
+      item.screenTimeToday < item.dailyLimitMinutes
+    ) {
+      const remaining = Math.round(item.dailyLimitMinutes - item.screenTimeToday);
+      chrome.notifications.create(`warn_${domain}`, {
+        type: 'basic',
+        iconUrl: 'icons/icon48.png',
+        title: '⚠️ Almost at your limit',
+        message: `Only ${remaining} min left for ${domain} today.`,
+      });
+      // Mark warning fired
+      const updated = blockedItems.map((b) =>
+        b.url === domain ? { ...b, warningFiredAt: todayStr } : b
+      );
+      await setStore({ blockedItems: updated });
+      break;
+    }
+  }
+
+  // Break reminder tracking
+  const store2 = await getStore();
+  const reminderMins = store2.settings.breakReminderMinutes ?? 30;
+  if (reminderMins > 0) {
+    const contStart = store2.continuousBrowsingStart ?? Date.now();
+    const contMinutes = (Date.now() - contStart) / 60000;
+    if (!store2.continuousBrowsingStart) {
+      await setStore({ continuousBrowsingStart: Date.now() });
+    } else if (contMinutes >= reminderMins) {
+      chrome.notifications.create('break_reminder', {
+        type: 'basic',
+        iconUrl: 'icons/icon48.png',
+        title: '☕ Time for a break!',
+        message: `You've been browsing for ${Math.round(contMinutes)} minutes. Take a short break.`,
+      });
+      await setStore({ continuousBrowsingStart: Date.now() });
+    }
+  }
 }
 
 // ─── Focus Mode ───────────────────────────────────────────────────────────────
@@ -372,6 +422,35 @@ function broadcastFocusState(): void {
   });
 }
 
+// ─── Daily Summary ────────────────────────────────────────────────────────────
+async function sendDailySummary(): Promise<void> {
+  const store = await getStore();
+  const today = todayString();
+  if (!store.settings.dailySummaryEnabled || store.lastDailySummary === today) return;
+
+  const todayInsights = store.insights.filter((e) => e.date === today);
+  if (todayInsights.length === 0) return;
+
+  const totalMins = Math.round(todayInsights.reduce((s, e) => s + e.totalMinutes, 0));
+  const topSite = todayInsights.sort((a, b) => b.totalMinutes - a.totalMinutes)[0];
+  const blockedCount = store.blockedItems.filter((b) =>
+    b.dailyLimitMinutes !== undefined && b.screenTimeToday >= b.dailyLimitMinutes
+  ).length;
+
+  const hrs = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  const timeStr = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+
+  chrome.notifications.create('daily_summary', {
+    type: 'basic',
+    iconUrl: 'icons/icon48.png',
+    title: '📊 Your Daily Summary',
+    message: `Total browsing: ${timeStr}. Top site: ${topSite?.domain ?? 'none'}. Limits hit: ${blockedCount}.`,
+  });
+
+  await setStore({ lastDailySummary: today });
+}
+
 // ─── Event Listeners ──────────────────────────────────────────────────────────
 chrome.runtime.onInstalled.addListener(async () => {
   await checkDailyReset();
@@ -383,12 +462,30 @@ chrome.runtime.onInstalled.addListener(async () => {
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
   chrome.alarms.create('daily_reset', { when: tomorrow.getTime(), periodInMinutes: 24 * 60 });
+
+  // Daily summary alarm at 9 PM
+  const summaryTime = new Date();
+  summaryTime.setHours(21, 0, 0, 0);
+  if (summaryTime <= new Date()) summaryTime.setDate(summaryTime.getDate() + 1);
+  chrome.alarms.create('daily_summary', { when: summaryTime.getTime(), periodInMinutes: 24 * 60 });
 });
 
 chrome.runtime.onStartup.addListener(async () => {
   await checkDailyReset();
   await rebuildRules();
   await rescheduleAlarms();
+
+  // Reset continuous browsing on browser start
+  await setStore({ continuousBrowsingStart: Date.now() });
+
+  // Re-schedule summary alarm if missing
+  const existing = await chrome.alarms.get('daily_summary');
+  if (!existing) {
+    const summaryTime = new Date();
+    summaryTime.setHours(21, 0, 0, 0);
+    if (summaryTime <= new Date()) summaryTime.setDate(summaryTime.getDate() + 1);
+    chrome.alarms.create('daily_summary', { when: summaryTime.getTime(), periodInMinutes: 24 * 60 });
+  }
 });
 
 chrome.storage.local.onChanged.addListener((changes) => {
@@ -401,6 +498,8 @@ chrome.storage.local.onChanged.addListener((changes) => {
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'daily_reset') {
     await checkDailyReset();
+  } else if (alarm.name === 'daily_summary') {
+    await sendDailySummary();
   } else if (alarm.name.startsWith('schedule_')) {
     await rebuildRules();
   } else if (alarm.name === 'focus_phase_end') {
@@ -423,6 +522,18 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   } else if (message.type === 'REBUILD_RULES') {
     rebuildRules().then(() => sendResponse({ ok: true }));
+    return true;
+  } else if (message.type === 'TEMPORARY_ALLOW') {
+    const { domain, minutes } = message;
+    getStore().then(async (s) => {
+      const until = Date.now() + minutes * 60 * 1000;
+      const updated = s.blockedItems.map((b) =>
+        b.url === domain ? { ...b, temporaryAllowUntil: until } : b
+      );
+      await setStore({ blockedItems: updated });
+      await rebuildRules();
+      sendResponse({ ok: true });
+    });
     return true;
   }
 });

@@ -84,6 +84,50 @@ export default function Settings() {
           </button>
         </div>
 
+        {/* Daily summary */}
+        <div className="card flex items-center justify-between">
+          <div>
+            <p className="font-medium text-gray-800 dark:text-gray-200">Daily Summary Notification</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Get a browsing summary notification at 9 PM each day</p>
+          </div>
+          <button
+            onClick={() => updateSettings({ dailySummaryEnabled: !store.settings.dailySummaryEnabled })}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${store.settings.dailySummaryEnabled !== false ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${store.settings.dailySummaryEnabled !== false ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
+
+        {/* Break reminder */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="font-medium text-gray-800 dark:text-gray-200">Break Reminder</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Get notified after continuous browsing</p>
+            </div>
+            <button
+              onClick={() => updateSettings({ breakReminderMinutes: store.settings.breakReminderMinutes === 0 ? 30 : 0 })}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${(store.settings.breakReminderMinutes ?? 30) > 0 ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${(store.settings.breakReminderMinutes ?? 30) > 0 ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+          {(store.settings.breakReminderMinutes ?? 30) > 0 && (
+            <div className="flex items-center gap-3 mt-1">
+              <span className="text-xs text-gray-500">Remind after</span>
+              <select
+                value={store.settings.breakReminderMinutes ?? 30}
+                onChange={(e) => updateSettings({ breakReminderMinutes: Number(e.target.value) })}
+                className="input py-1 w-28 text-sm"
+              >
+                {[15, 20, 30, 45, 60, 90, 120].map((m) => (
+                  <option key={m} value={m}>{m} minutes</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
         {/* Whitelist mode */}
         <div className="card flex items-center justify-between">
           <div>

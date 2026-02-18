@@ -19,6 +19,8 @@ export interface BlockedItem {
   dailyLimitMinutes?: number;   // undefined = no limit
   limitOnly?: boolean;          // true = only block when daily limit is exceeded (not always blocked)
   screenTimeToday: number;      // minutes, resets at midnight
+  temporaryAllowUntil?: number; // timestamp ms — bypass active until this time
+  warningFiredAt?: string;      // date string — 80% warning already sent for this day
   createdAt: number;            // Unix timestamp ms
 }
 
@@ -87,6 +89,8 @@ export interface AppSettings {
   theme: 'light' | 'dark';
   showNotifications: boolean;
   dismissedSuggestions: string[];
+  breakReminderMinutes?: number; // 0 = disabled, e.g. 30 = remind after 30 mins continuous browsing
+  dailySummaryEnabled?: boolean;
 }
 
 // ─── Root Storage ─────────────────────────────────────────────────────────────
@@ -98,6 +102,9 @@ export interface AppStorage {
   customBlockPage: CustomBlockPageConfig;
   settings: AppSettings;
   lastDailyReset: string;       // "YYYY-MM-DD"
+  onboardingCompleted?: boolean;
+  continuousBrowsingStart?: number; // timestamp ms — when current browsing session started
+  lastDailySummary?: string;   // "YYYY-MM-DD" — last date a summary was sent
 }
 
 // ─── Message Types ────────────────────────────────────────────────────────────
