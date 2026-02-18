@@ -52,7 +52,7 @@ export default function Settings() {
 
   return (
     <div className="p-8 max-w-xl">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Settings</h1>
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">Settings</h1>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">General extension preferences.</p>
 
       <div className="space-y-4">

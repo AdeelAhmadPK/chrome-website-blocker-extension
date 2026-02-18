@@ -102,7 +102,7 @@ export default function FocusModeePage() {
 
   return (
     <div className="p-8 max-w-2xl">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Focus Mode</h1>
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">Focus Mode</h1>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
         Use the Pomodoro technique to stay focused. All sites except whitelisted ones are blocked during work sessions.
       </p>

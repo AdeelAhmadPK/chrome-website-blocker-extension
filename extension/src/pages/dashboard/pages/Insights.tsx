@@ -97,7 +97,7 @@ export default function Insights() {
     <div className="p-8 max-w-5xl">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Insights</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Insights</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Your browsing activity overview.</p>
         </div>
         <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">

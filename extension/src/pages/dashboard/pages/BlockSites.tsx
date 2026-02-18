@@ -214,7 +214,7 @@ export default function BlockSites() {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Block Sites</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Block Sites</h1>
         <div className="flex gap-2">
           <button onClick={() => setShowCategories(true)} className="btn-secondary text-xs">
             Categories

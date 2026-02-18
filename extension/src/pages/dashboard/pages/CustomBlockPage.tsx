@@ -93,7 +93,7 @@ export default function CustomBlockPage() {
 
   return (
     <div className="p-8 max-w-4xl">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Custom Block Page</h1>
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">Custom Block Page</h1>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
         Customize what users see when a site is blocked. Changes save automatically.
       </p>

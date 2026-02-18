@@ -106,12 +106,12 @@ export default function UsageLimit() {
     <div className="p-8 max-w-4xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Usage Limit</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Usage Limit</h1>
         <button onClick={handleRedirect} className="btn-secondary text-xs">
           Redirect
         </button>
       </div>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+      <p className="text-base text-gray-500 dark:text-gray-400 mb-6">
         Set daily time limits for specific websites. Once you reach your limit, access will be blocked until the next day.
       </p>
 

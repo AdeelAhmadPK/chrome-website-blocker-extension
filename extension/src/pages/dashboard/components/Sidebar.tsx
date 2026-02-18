@@ -81,7 +81,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   };
 
   return (
-      <aside className="w-52 flex-shrink-0 flex flex-col h-full bg-white border-r border-slate-100 dark:bg-slate-900 dark:border-slate-800">
+      <aside className="w-56 flex-shrink-0 flex flex-col h-full bg-white border-r border-slate-100 dark:bg-slate-900 dark:border-slate-800">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-4 border-b border-slate-100 dark:border-slate-800">
         <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center flex-shrink-0">
