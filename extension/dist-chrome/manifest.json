@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "SiteBlocker Pro – Website Blocker & Focus Tool",
+  "version": "1.0.0",
+  "description": "Block websites, set daily time limits, track browsing insights and stay focused with Pomodoro sessions. The best free site blocker for Chrome.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "background": {
+    "service_worker": "background/index.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/tracker.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "declarativeNetRequestFeedback",
+    "storage",
+    "alarms",
+    "tabs",
+    "scripting",
+    "webNavigation",
+    "notifications"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "web_accessible_resources": [
+    {
+      "resources": ["blocked.html", "assets/*", "icons/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
